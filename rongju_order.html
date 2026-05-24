@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>榕居 Rong Ju · 晚宴點餐 Dinner Order Builder (10 位)</title>
+<style>
+  :root {
+    --bg: #faf6ef;
+    --paper: #fffdf8;
+    --ink: #1f1a14;
+    --muted: #6b6258;
+    --accent: #8a2a2b;
+    --gold: #b08a3e;
+    --line: #e6dfd1;
+    --green: #2f7d3a;
+    --amber: #b88311;
+    --red: #b03030;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink);
+    font-family: "PingFang TC", "Noto Serif TC", "Songti TC", "Microsoft JhengHei", "Georgia", serif; }
+  .en { font-family: "Georgia", "Times New Roman", serif; font-style: italic; color: var(--muted); }
+  header {
+    padding: 28px 32px 18px;
+    border-bottom: 1px solid var(--line);
+    background: var(--paper);
+  }
+  header h1 { margin: 0 0 4px; font-size: 30px; letter-spacing: 3px; font-weight: 500; }
+  header h1 .en { font-size: 16px; margin-left: 12px; letter-spacing: 1px; }
+  header .sub { color: var(--muted); font-size: 13px; letter-spacing: 0.5px; }
+  header .sub .en { font-size: 12px; }
+  .toolbar {
+    display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+    padding: 14px 32px;
+    background: var(--paper);
+    border-bottom: 1px solid var(--line);
+    position: sticky; top: 0; z-index: 5;
+  }
+  .toolbar button {
+    font-family: inherit;
+    font-size: 14px;
+    padding: 8px 14px;
+    border: 1px solid var(--ink);
+    background: var(--paper);
+    color: var(--ink);
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: background .15s;
+  }
+  .toolbar button .en { color: inherit; font-size: 11px; margin-left: 4px; font-style: italic; opacity: 0.7; }
+  .toolbar button:hover { background: var(--ink); color: var(--paper); }
+  .toolbar button:hover .en { color: var(--paper); opacity: 0.9; }
+  .toolbar .spacer { flex: 1; }
+  .toolbar .pax {
+    display: flex; align-items: center; gap: 8px; font-size: 14px;
+  }
+  .toolbar .pax input { width: 56px; padding: 6px; text-align: center; border: 1px solid var(--line); font-family: inherit; }
+  main { padding: 8px 32px 240px; max-width: 1200px; margin: 0 auto; }
+  section.cat {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    margin: 16px 0;
+  }
+  section.cat > h2 {
+    margin: 0;
+    padding: 14px 20px;
+    background: linear-gradient(90deg, #f3ead5 0%, #fffdf8 100%);
+    border-bottom: 1px solid var(--line);
+    font-size: 20px;
+    letter-spacing: 2px;
+    font-weight: 500;
+    display: flex; align-items: baseline; gap: 10px;
+  }
+  section.cat > h2 .en { font-size: 13px; letter-spacing: 1px; }
+  section.cat > h2 .cat-sub { margin-left: auto; font-size: 13px; color: var(--muted); font-weight: normal; letter-spacing: 0.5px; }
+  section.cat > h2 .cat-sub .en { font-size: 11px; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  th { font-size: 13px; letter-spacing: 1px; color: var(--muted); font-weight: normal; background: #fbf5e8; }
+  th .en { font-size: 10px; margin-left: 4px; }
+  tr:last-child td { border-bottom: none; }
+  tr.proposed { background: #fdf8e6; }
+  tr.proposed td:first-child { border-left: 3px solid var(--gold); }
+  .name { font-size: 16px; letter-spacing: 1px; }
+  .name .en { display: block; font-size: 12px; margin-top: 3px; letter-spacing: 0.3px; }
+  .badge {
+    display: inline-block;
+    font-size: 10px;
+    padding: 1px 6px;
+    margin-left: 6px;
+    border-radius: 2px;
+    letter-spacing: 0.5px;
+    vertical-align: middle;
+    font-style: normal;
+    font-family: "PingFang TC", "Noto Serif TC", "Microsoft JhengHei", "Georgia", serif;
+  }
+  .badge.sig { background: var(--accent); color: #fff; }
+  .badge.shell { background: #e0eef5; color: #2a5d78; }
+  .badge.nut { background: #efe2cb; color: #6b4a14; }
+  .badge.unit { background: #efece4; color: var(--muted); }
+  td.qty { width: 90px; text-align: center; }
+  td.qty input {
+    width: 60px; padding: 6px; text-align: center;
+    font-family: inherit; font-size: 15px;
+    border: 1px solid var(--line); background: var(--paper);
+  }
+  td.qty input:focus { outline: 2px solid var(--gold); }
+  td.price { width: 110px; text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
+  td.price input.market { width: 84px; padding: 4px; text-align: right; font-family: inherit; border: 1px dashed var(--gold); background: #fff; }
+  td.subtotal { width: 110px; text-align: right; font-variant-numeric: tabular-nums; font-weight: bold; }
+  td.subtotal.zero { color: #c8c0b0; font-weight: normal; }
+  tfoot td { background: #fbf5e8; font-weight: bold; }
+  tfoot td.subtotal { font-size: 15px; }
+
+  .totals {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    background: var(--ink); color: var(--paper);
+    padding: 18px 32px;
+    border-top: 4px solid var(--gold);
+    box-shadow: 0 -6px 18px rgba(0,0,0,0.18);
+    z-index: 10;
+  }
+  .totals-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap;
+    max-width: 1200px; margin: 0 auto;
+  }
+  .totals .nums { display: flex; gap: 32px; align-items: baseline; flex-wrap: wrap; }
+  .totals .nums div { font-size: 13px; color: #c9bfa7; letter-spacing: 1px; }
+  .totals .nums div .en { color: #8a8170; font-size: 10px; margin-left: 4px; }
+  .totals .nums div b { display: block; font-size: 22px; color: #fff; font-variant-numeric: tabular-nums; margin-top: 4px; letter-spacing: 0.5px; }
+  .totals .nums div.grand b { color: var(--gold); font-size: 26px; }
+  .banner {
+    padding: 10px 18px; font-size: 14px; letter-spacing: 1px;
+    border-radius: 2px; min-width: 260px; text-align: center;
+  }
+  .banner .en { display: block; font-size: 11px; opacity: 0.85; margin-top: 2px; color: inherit; font-style: italic; }
+  .banner.green { background: var(--green); color: #fff; }
+  .banner.amber { background: var(--amber); color: #fff; }
+  .banner.red { background: var(--red); color: #fff; }
+  .legend { padding: 12px 32px; color: var(--muted); font-size: 12px; background: var(--paper); border-bottom: 1px solid var(--line); letter-spacing: 0.5px; }
+  .legend span { margin-right: 14px; }
+  .legend .en { font-size: 10px; }
+  @media (max-width: 720px) {
+    main, header, .toolbar, .legend { padding-left: 14px; padding-right: 14px; }
+    .totals { padding: 14px; }
+    .totals .nums { gap: 18px; }
+    .totals .nums div b { font-size: 18px; }
+    .totals .nums div.grand b { font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>榕居 晚宴點餐單 <span class="en">Rong Ju · Dinner Order Builder</span></h1>
+  <div class="sub">十位用餐 · 稅前目標金額 NT$ 50,000 – 58,000 · 臺北嘉佩樂酒店
+    <span class="en">— 10 pax · pre-service subtotal target · Capella Hotel Taipei</span>
+  </div>
+</header>
+
+<div class="toolbar">
+  <button id="btn-load">載入建議 <span class="en">Load Proposal</span></button>
+  <button id="btn-clear">全部清除 <span class="en">Clear All</span></button>
+  <div class="pax">
+    人數 <span class="en">Pax</span>
+    <input id="pax" type="number" min="1" value="10">
+    <button id="btn-applypax" style="padding:6px 10px; font-size:12px;">套用人數 <span class="en">Apply</span></button>
+  </div>
+  <div class="spacer"></div>
+  <button id="btn-print" onclick="window.print()">列印 / 存 PDF <span class="en">Print / PDF</span></button>
+</div>
+
+<div class="legend">
+  <span><span class="badge sig">招牌</span> 主廚招牌 <span class="en">Chef's signature</span></span>
+  <span><span class="badge shell">甲殼</span> 含甲殼類 <span class="en">Shellfish</span></span>
+  <span><span class="badge nut">堅果</span> 含堅果 <span class="en">Nuts</span></span>
+  <span><span class="badge unit">位</span> 以位計價 <span class="en">Per person</span></span>
+  <span style="color: var(--gold)">★ 金色邊行為建議點選 <span class="en">Gold-bordered rows are pre-filled</span></span>
+</div>
+
+<main id="menu"></main>
+
+<div class="totals">
+  <div class="totals-row">
+    <div class="nums">
+      <div>稅前小計 <span class="en">Subtotal</span><b id="sum-sub">NT$ 0</b></div>
+      <div>10% 服務費 <span class="en">Service</span><b id="sum-svc">NT$ 0</b></div>
+      <div class="grand">總計 <span class="en">Grand Total</span><b id="sum-grand">NT$ 0</b></div>
+      <div>項目數 <span class="en">Items</span><b id="sum-items">0</b></div>
+    </div>
+    <div id="banner" class="banner amber">請開始選擇菜色<span class="en">Add items to begin</span></div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// 菜單資料 MENU DATA — every à la carte item from pages 5–13, 15–18
+// unit: "pp" 每位 | "for2" 兩位份 | else fixed-portion
+// def: 建議數量 (Approved proposal totals NT$ 51,096 pre-service)
+// ============================================================
+const PAX_DEFAULT = 10;
+const BUDGET_MIN = 50000;
+const BUDGET_MAX = 58000;
+
+const MENU = [
+  { cat: "前菜", en: "Appetisers", items: [
+    { id:"app-bream",  zh:"黃豆醬金目鯛魚卷", en:"Golden Threadfin Bream Roll with Soybean Paste", price:680,  unit:"8 件", unitEn:"per 8 pcs", def:2 },
+    { id:"app-lotus",  zh:"椰汁紫糯米釀九孔蓮藕", en:"Nine-Hole Lotus Root with Purple Glutinous Rice, Coconut Milk", price:480, unit:"8 件", unitEn:"per 8 pcs", def:0 },
+    { id:"app-yuyang", zh:"百花鴛鴦雞", en:"Yuan-Yang Chicken with Shrimp Paste", price:780, unit:"份", unitEn:"each", def:1, sig:true, shell:true },
+    { id:"app-chips",  zh:"燈影藕片", en:"Lotus Root Chips with Chilli Honey, Sesame & Peppercorn", price:380, unit:"份", unitEn:"each", def:1 },
+  ]},
+  { cat: "燒味", en: "Barbecue", items: [
+    { id:"bbq-wagyu",  zh:"醬燒 A5 和牛叉燒", en:"Smoked A5 Wagyu Char Siu", price:3800, unit:"份", unitEn:"order", def:1, sig:true },
+    { id:"bbq-pigeon", zh:"玻璃香茅乳鴿", en:"Deep-Fried Pigeon with Lemongrass", price:1580, unit:"隻", unitEn:"whole", def:0 },
+    { id:"bbq-chick",  zh:"蔥油脆皮雞", en:"Crispy Fried Chicken with Scallion Oil", price:1288, unit:"半隻", unitEn:"half (×2 = whole)", def:2, sig:true },
+  ]},
+  { cat: "湯品", en: "Soups", items: [
+    { id:"soup-bird",  zh:"太史燕窩拆魚羹", en:"Hand-Shredded Grouper Bisque with Bird's Nest", price:700, unit:"pp", unitEn:"pp", def:0, sig:true },
+    { id:"soup-mat",   zh:"松茸菊花繡球豆腐湯", en:"Clear Matsutake Soup with Chrysanthemum & Tofu", price:580, unit:"pp", unitEn:"pp", def:0 },
+    { id:"soup-fishm", zh:"清燉養顏花膠雞湯", en:"Double-Boiled Chicken Soup with Fish Maw", price:900, unit:"pp", unitEn:"pp", def:10 },
+    { id:"soup-cab",   zh:"開水白菜", en:"Cabbage in Consommé", price:500, unit:"pp", unitEn:"pp", def:0 },
+  ]},
+  { cat: "海味", en: "Abalone & Dried Seafood", items: [
+    { id:"ds-ab",    zh:"南非吉品廿五頭乾鮑", en:"Braised Whole 25-Head Dried South African Abalone", price:3800, unit:"pp", unitEn:"pp", def:0, shell:true },
+    { id:"ds-sc",    zh:"蟬衣脆皮百花釀海參", en:"Crispy Sea Cucumber, Fermented Chili Bean & Sweet Rice", price:1380, unit:"pp", unitEn:"pp", def:10, shell:true },
+    { id:"ds-fishm", zh:"黑松露鮑汁花膠", en:"Braised Fish Maw with Black Truffle in Abalone Sauce", price:3280, unit:"pp", unitEn:"pp", def:0, shell:true },
+    { id:"ds-pipa",  zh:"紅燒香煎琵琶燕盞", en:"Pan-Seared Pipa Bird's Nest with Chicken Broth", price:1380, unit:"pp", unitEn:"pp", def:0 },
+  ]},
+  { cat: "市場海鮮", en: "Market Seafood", items: [
+    { id:"ms-lobm", zh:"羊肚菌京蔥炒澳洲龍蝦", en:"Wok-Fried Australian Lobster with Morel Mushroom", price:0, market:true, unit:"隻 (時價)", unitEn:"whole (market)", def:0, shell:true },
+    { id:"ms-gar",  zh:"拍薑海鹽蒸東星斑", en:"Steamed Leopard Coral Garoupa with Sea Salt & Ginger", price:0, market:true, unit:"隻 (時價)", unitEn:"whole (market)", def:0 },
+  ]},
+  { cat: "海鮮", en: "Fresh Seafood", items: [
+    { id:"fs-lobp",   zh:"龍蝦手剁肉餅", en:"Steamed Lobster with Hand-Chopped Pork Patty & Egg in Premium Soy", price:0, market:true, unit:"份 (時價)", unitEn:"order (market)", def:0, shell:true },
+    { id:"fs-scal",   zh:"XO 醬白木耳炒玉帶", en:"Stir-Fried Scallops with White Fungus, Asparagus & XO Sauce", price:1980, unit:"份", unitEn:"order", def:0, shell:true },
+    { id:"fs-grouper",zh:"陳皮東星球炒菜苗", en:"Stir-Fried Red Grouper with Vegetable Sprouts & Dried Tangerine Peel", price:2100, unit:"份", unitEn:"order", def:0 },
+    { id:"fs-lobm",   zh:"澳洲龍蝦配麻婆豆腐", en:"Australian Lobster with Mapo Tofu", price:3880, unit:"份", unitEn:"order", def:1, shell:true },
+  ]},
+  { cat: "肉類", en: "Meat", items: [
+    { id:"mt-pork",  zh:"菠蘿冰鎮咕咾肉", en:"Chilled Sweet & Sour Pork with Pineapple", price:1980, unit:"份", unitEn:"order", def:0 },
+    { id:"mt-wagyu", zh:"香辣炒澳洲 M9 和牛沙朗", en:"Stir-Fried Australian M9 Wagyu Sirloin with Shiitake, Baby Leeks & Chili", price:2580, unit:"份", unitEn:"order", def:1 },
+  ]},
+  { cat: "蔬菜", en: "Vegetables", items: [
+    { id:"vg-asp",  zh:"姬松茸藕片百合炒蘆筍", en:"Wok-Fried Asparagus with Himematsutake, Lotus Root & Lily Bulbs", price:890, unit:"份", unitEn:"order", def:0 },
+    { id:"vg-seas", zh:"上湯杞子浸時蔬", en:"Seasonal Vegetables in Superior Broth with Goji Berries", price:760, unit:"份", unitEn:"order", def:1 },
+    { id:"vg-napa", zh:"櫻花蝦 XO 醬嫩豆炒津菜", en:"Wok-Fried Baby Napa with Baby Beans, Sakura Prawns & XO Sauce", price:780, unit:"份", unitEn:"order", def:1, shell:true },
+    { id:"vg-bean", zh:"乾煸鵝肝和牛鬆四季豆", en:"Sautéed String Beans, Diced Wagyu Beef & Foie Gras", price:1580, unit:"份", unitEn:"order", def:0 },
+  ]},
+  { cat: "飯與麵", en: "Rice & Noodles", items: [
+    { id:"rn-glut",  zh:"櫻花蝦香芋生炒糯米飯", en:"Wok-Fried Glutinous Rice with Cured Meats, Taro & Sakura Prawns", price:1080, unit:"for2", unitEn:"for 2 pax", def:5, shell:true },
+    { id:"rn-truff", zh:"黑松露雜菜炒飯", en:"Wok-Fried Black Truffle Fried Rice", price:1080, unit:"for2", unitEn:"for 2 pax", def:0 },
+    { id:"rn-hofan", zh:"乾炒和牛河", en:"Wok-Fried Flat Rice Noodles with Wagyu Beef & Bean Sprouts", price:1880, unit:"for2", unitEn:"for 2 pax", def:0 },
+  ]},
+  { cat: "甜品", en: "Desserts", items: [
+    { id:"de-xlb",  zh:"鐵觀音杏仁巧克力小籠包", en:"Xiao Long Bao with Almond, Chocolate & Tieguanyin Tea", price:800, unit:"4 件", unitEn:"per 4 pcs", def:0, nut:true },
+    { id:"de-ice",  zh:"雪糕龍鬚糖", en:"Ice Cream with Dragon's Beard Candy", price:400, unit:"4 件", unitEn:"per 4 pcs", def:0 },
+    { id:"de-soup", zh:"川貝枇杷雪梨菊花豆腐甜湯", en:"Sweet Soup with Fritillaria, Loquat, Pear, Chrysanthemum & Tofu", price:480, unit:"pp", unitEn:"pp", def:10 },
+  ]},
+  { cat: "中式茶品", en: "Chinese Tea", items: [
+    { id:"t-longan",   zh:"龍眼花茶",          en:"Longan Flower Tea",          price:120, unit:"pp", unitEn:"pp", def:0 },
+    { id:"t-jasmine",  zh:"香片",              en:"Jasmine Tea",                price:120, unit:"pp", unitEn:"pp", def:0 },
+    { id:"t-puer90l",  zh:"九零散大葉青普洱茶", en:"1990's Loose Leaf Puer Tea", price:120, unit:"pp", unitEn:"pp", def:0 },
+    { id:"t-alishan",  zh:"阿里山烏龍茶",      en:"Alishan Oolong Tea",         price:120, unit:"pp", unitEn:"pp", def:10 },
+    { id:"t-ruby",     zh:"日月潭紅玉紅茶",    en:"Sun Moon Lake Ruby Black Tea", price:200, unit:"pp", unitEn:"pp", def:0 },
+    { id:"t-jinxuan",  zh:"合歡山金萱烏龍茶",  en:"Jinxuan Oolong Tea",         price:200, unit:"pp", unitEn:"pp", def:0 },
+    { id:"t-osman",    zh:"桂花炭焙鐵觀音",    en:"Osmanthus Charcoal-Roasted Tieguanyin", price:200, unit:"pp", unitEn:"pp", def:0 },
+    { id:"t-puer7542", zh:"九零年末 7542",     en:"1990's 7542 Puer Tea",       price:200, unit:"pp", unitEn:"pp", def:0 },
+    { id:"t-puer80",   zh:"八零春芽生普散茶",  en:"1980's Spring Buds Puer Tea", price:200, unit:"pp", unitEn:"pp", def:0 },
+    { id:"t-capella",  zh:"龍隱烏龍茶 (臺北嘉佩樂限定)", en:"Capella Oolong Tea (Taipei exclusive)", price:350, unit:"pp", unitEn:"pp", def:0, sig:true },
+    { id:"t-oriental", zh:"東方美人茶",        en:"Oriental Beauty Tea",        price:350, unit:"pp", unitEn:"pp", def:0 },
+    { id:"t-ginseng",  zh:"七零蔘香普洱茶",    en:"1970's Loose Leaf Ginseng Puer Tea", price:350, unit:"pp", unitEn:"pp", def:0 },
+  ]},
+  { cat: "康普茶與軟性飲料", en: "Kombucha, Soft Drinks & Sparkling Tea", items: [
+    { id:"kb-hib",   zh:"洛神花康普茶",   en:"Hibiscus Kombucha",     price:350, unit:"杯", unitEn:"glass", def:0 },
+    { id:"kb-lemon", zh:"檸檬草康普茶",   en:"Lemongrass Kombucha",   price:350, unit:"杯", unitEn:"glass", def:0 },
+    { id:"sd-coke",  zh:"可口可樂",       en:"Coca-Cola",             price:200, unit:"杯", unitEn:"glass", def:0 },
+    { id:"sd-zero",  zh:"可口可樂 ZERO",  en:"Coca-Cola Zero",        price:200, unit:"杯", unitEn:"glass", def:0 },
+    { id:"sd-spr",   zh:"雪碧",           en:"Sprite",                price:200, unit:"杯", unitEn:"glass", def:0 },
+    { id:"sp-darj",  zh:"大吉嶺之華氣泡茶", en:"Darjeeling Sparkling Tea", price:2500, unit:"瓶", unitEn:"bottle", def:0 },
+    { id:"sp-hoji",  zh:"焙茶之韻氣泡茶",  en:"Hojicha Sparkling Tea",  price:2500, unit:"瓶", unitEn:"bottle", def:0 },
+  ]},
+  { cat: "果汁", en: "Juice", items: [
+    { id:"j-grape",  zh:"葡萄汁 (瓶裝)",   en:"Grape (bottled)",            price:260, unit:"杯", unitEn:"glass", def:0 },
+    { id:"j-apple",  zh:"蘋果汁 (瓶裝)",   en:"Apple (bottled)",            price:260, unit:"杯", unitEn:"glass", def:0 },
+    { id:"j-pear",   zh:"西洋梨汁 (瓶裝)", en:"Pear (bottled)",             price:260, unit:"杯", unitEn:"glass", def:0 },
+    { id:"j-orange", zh:"鮮榨柳橙汁",     en:"Orange (freshly squeezed)",   price:300, unit:"杯", unitEn:"glass", def:0 },
+  ]},
+];
+
+// ============================================================
+// RENDER
+// ============================================================
+const fmt = n => "NT$ " + n.toLocaleString();
+const root = document.getElementById("menu");
+
+MENU.forEach(group => {
+  const sec = document.createElement("section");
+  sec.className = "cat";
+  sec.innerHTML = `
+    <h2>${group.cat} <span class="en">${group.en}</span>
+      <span class="cat-sub">小計 <span class="en">Subtotal</span> <span data-catsum="${group.cat}">NT$ 0</span></span>
+    </h2>
+    <table>
+      <thead>
+        <tr>
+          <th>菜色 <span class="en">Item</span></th>
+          <th>單位 <span class="en">Unit</span></th>
+          <th style="text-align:right">單價 <span class="en">Price</span></th>
+          <th style="text-align:center">數量 <span class="en">Qty</span></th>
+          <th style="text-align:right">小計 <span class="en">Subtotal</span></th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  `;
+  const tbody = sec.querySelector("tbody");
+  group.items.forEach(it => {
+    const tr = document.createElement("tr");
+    tr.dataset.id = it.id;
+    tr.dataset.cat = group.cat;
+    if (it.def > 0) tr.classList.add("proposed");
+    const badges = [
+      it.sig ? '<span class="badge sig">招牌</span>' : '',
+      it.shell ? '<span class="badge shell">甲殼</span>' : '',
+      it.nut ? '<span class="badge nut">堅果</span>' : '',
+    ].join('');
+    const unitLabel = it.unit === "pp" ? '<span class="badge unit">每位</span>'
+                    : it.unit === "for2" ? '<span class="badge unit">兩位份</span>'
+                    : `<span class="badge unit">${it.unit}</span>`;
+    const unitEn = it.unitEn === "pp" ? "per pp"
+                 : it.unitEn === "for 2 pax" ? "for 2 pax"
+                 : it.unitEn;
+    const priceCell = it.market
+      ? `<input type="number" min="0" class="market" data-market="${it.id}" placeholder="時價" value="${it.price || ''}">`
+      : it.price.toLocaleString();
+    tr.innerHTML = `
+      <td class="name">${it.zh} ${badges}<span class="en">${it.en}</span></td>
+      <td>${unitLabel}<div class="en" style="font-size:10px; margin-top:3px;">${unitEn}</div></td>
+      <td class="price">${priceCell}</td>
+      <td class="qty"><input type="number" min="0" step="1" data-qty="${it.id}" value="${it.def}"></td>
+      <td class="subtotal zero" data-sub="${it.id}">0</td>
+    `;
+    tbody.appendChild(tr);
+  });
+  root.appendChild(sec);
+});
+
+// ============================================================
+// 即時計算 LIVE TOTALS
+// ============================================================
+function recalc() {
+  let grand = 0, items = 0;
+  MENU.forEach(group => {
+    let catSum = 0;
+    group.items.forEach(it => {
+      const qtyEl = document.querySelector(`[data-qty="${it.id}"]`);
+      const subEl = document.querySelector(`[data-sub="${it.id}"]`);
+      const tr = document.querySelector(`tr[data-id="${it.id}"]`);
+      let price = it.price;
+      if (it.market) {
+        const me = document.querySelector(`[data-market="${it.id}"]`);
+        price = parseFloat(me.value) || 0;
+      }
+      const qty = parseInt(qtyEl.value) || 0;
+      const sub = qty * price;
+      subEl.textContent = sub.toLocaleString();
+      subEl.classList.toggle("zero", sub === 0);
+      tr.classList.toggle("proposed", qty > 0);
+      catSum += sub;
+      if (qty > 0) items += qty;
+    });
+    document.querySelector(`[data-catsum="${group.cat}"]`).textContent = fmt(catSum);
+    grand += catSum;
+  });
+  const svc = grand * 0.10;
+  const total = grand + svc;
+  document.getElementById("sum-sub").textContent = fmt(grand);
+  document.getElementById("sum-svc").textContent = fmt(Math.round(svc));
+  document.getElementById("sum-grand").textContent = fmt(Math.round(total));
+  document.getElementById("sum-items").textContent = items;
+
+  const banner = document.getElementById("banner");
+  banner.classList.remove("green", "amber", "red");
+  if (grand === 0) {
+    banner.classList.add("amber");
+    banner.innerHTML = `請開始選擇菜色<span class="en">Add items to begin</span>`;
+  } else if (grand < BUDGET_MIN) {
+    banner.classList.add("amber");
+    const gap = (BUDGET_MIN - grand).toLocaleString();
+    banner.innerHTML = `未達門檻 — 距 NT$ 50,000 還差 NT$ ${gap}<span class="en">Under budget — NT$ ${gap} below the 50,000 floor</span>`;
+  } else if (grand > BUDGET_MAX) {
+    banner.classList.add("red");
+    const over = (grand - BUDGET_MAX).toLocaleString();
+    banner.innerHTML = `已超預算 — 超出 NT$ ${over} (建議改點套餐)<span class="en">Over budget — NT$ ${over} above 58,000 (order the set instead)</span>`;
+  } else {
+    banner.classList.add("green");
+    banner.innerHTML = `✓ 落在目標區間 — NT$ ${grand.toLocaleString()}<span class="en">On target within the 50k–58k window</span>`;
+  }
+}
+
+document.addEventListener("input", e => {
+  if (e.target.matches("[data-qty], [data-market]")) recalc();
+});
+
+// ============================================================
+// 工具列動作 TOOLBAR ACTIONS
+// ============================================================
+document.getElementById("btn-load").addEventListener("click", () => {
+  MENU.forEach(g => g.items.forEach(it => {
+    document.querySelector(`[data-qty="${it.id}"]`).value = it.def;
+  }));
+  document.getElementById("pax").value = PAX_DEFAULT;
+  recalc();
+});
+document.getElementById("btn-clear").addEventListener("click", () => {
+  document.querySelectorAll("[data-qty]").forEach(e => e.value = 0);
+  recalc();
+});
+document.getElementById("btn-applypax").addEventListener("click", () => {
+  const pax = parseInt(document.getElementById("pax").value) || PAX_DEFAULT;
+  MENU.forEach(g => g.items.forEach(it => {
+    const el = document.querySelector(`[data-qty="${it.id}"]`);
+    const cur = parseInt(el.value) || 0;
+    if (cur === 0) return;
+    if (it.unit === "pp") el.value = pax;
+    else if (it.unit === "for2") el.value = Math.ceil(pax / 2);
+  }));
+  recalc();
+});
+
+recalc();
+</script>
+</body>
+</html>
